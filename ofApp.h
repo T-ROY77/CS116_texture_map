@@ -49,6 +49,9 @@ public:
 	ofColor specularColor = ofColor::lightGray;
 
 	ofImage image;
+
+	bool hasTexture = false;
+	bool hasTextureSpecular = false;
 };
 
 //  General purpose sphere  (assume parametric)
