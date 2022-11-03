@@ -3,7 +3,6 @@
 
 //  (c) Troy Perez - November 2 2022
 
-
 // Intersect Ray with Plane  (wrapper on glm::intersect*
 //
 
@@ -46,10 +45,12 @@ Ray RenderCam::getRay(float u, float v) {
 	return(Ray(position, glm::normalize(pointOnPlane - position)));
 }
 
-
+//--------------------------------------------------------------
+//converts the current point on the plane to a pixel on texture map
+//returns the color from the texture
 ofColor Plane::textureMap(glm::vec3 p) {
 	ofColor tex = ofColor(0);
-
+	//ground plane
 	if (normal == glm::vec3(0, 1, 0)) {
 		float x = getIntersectionPoint().x - position.x;
 		float y = getIntersectionPoint().z - position.z;
@@ -64,6 +65,7 @@ ofColor Plane::textureMap(glm::vec3 p) {
 			tex = image.getColor(fmod(i, image.getWidth()), fmod(j, image.getHeight()));
 		}
 	}
+	//wall plane
 	else if (normal == glm::vec3(0, 0, 1)) {
 		float x = getIntersectionPoint().x - position.x;
 		float y = getIntersectionPoint().y - position.y;
@@ -81,10 +83,12 @@ ofColor Plane::textureMap(glm::vec3 p) {
 	return tex;
 }
 
-
+//--------------------------------------------------------------
+//converts the point to a pixel on the texture specular map
+//returns the specular color from the texture
 ofColor Plane::specularTextureMap(glm::vec3 p) {
 	ofColor tex = ofColor(0);
-
+	//ground plane
 	if (normal == glm::vec3(0, 1, 0)) {
 		float x = getIntersectionPoint().x - position.x;
 		float y = getIntersectionPoint().z - position.z;
@@ -99,6 +103,7 @@ ofColor Plane::specularTextureMap(glm::vec3 p) {
 			tex = imageSpec.getColor(fmod(i, imageSpec.getWidth()), fmod(j, imageSpec.getHeight()));
 		}
 	}
+	//wall plane
 	else if (normal == glm::vec3(0, 0, 1)) {
 		float x = getIntersectionPoint().x - position.x;
 		float y = getIntersectionPoint().y - position.y;
@@ -129,7 +134,7 @@ void ofApp::setup() {
 	wallTextureSpecular.load("bricks_wall_spec.jpg");
 
 	gui.setup();
-	gui.add(intensity.setup("Light intensity", .5, .05, 1));
+	gui.add(intensity.setup("Light intensity", .2, .05, 1));
 	gui.add(power.setup("Phong p", 100, 10, 10000));
 	bHide = true;
 
@@ -139,6 +144,58 @@ void ofApp::setup() {
 	previewCam.setFov(90);
 	previewCam.setPosition(renderCam.position);
 	previewCam.lookAt(glm::vec3(0, 0, -1));
+
+
+	scene.clear();
+
+	scene.push_back(new Plane(glm::vec3(-1, -3, 0), glm::vec3(0, 1, 0), ofColor::darkBlue, 12, 10));				//ground plane
+
+	scene.push_back(new Plane(glm::vec3(-1, 2, -5), glm::vec3(0, 0, 1), ofColor::darkGray, 20, 10));	        	//wall plane
+
+	scene.push_back(new Sphere(glm::vec3(-3, -1.5, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-2.75, -1.6, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-2.5, -1, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-2.75, -.9, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-2.5, -1.5, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-3.1, -1.25, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-3, -1, 1), .1, ofColor::darkRed));
+
+	scene.push_back(new Sphere(glm::vec3(-2.45, -1.25, 1), .1, ofColor::darkRed));											//purple sphere
+
+
+	scene.push_back(new Sphere(glm::vec3(-2.5, -1.7, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-2.5, -1.9, 1), .1, ofColor::darkRed));											//purple sphere
+
+	scene.push_back(new Sphere(glm::vec3(-2.5, -2.1, 1), .1, ofColor::darkRed));											//purple sphere
+
+
+	//scene.push_back(new Sphere(glm::vec3(-1, -1.5, 2), .5, ofColor::blue));												//blue sphere
+
+	//scene.push_back(new Sphere(glm::vec3(-.5, -1.5, 0), .5, ofColor::darkGreen));											//green sphere
+
+
+	light.clear();
+
+	light.push_back(new Light(glm::vec3(100, 150, 150), .2));			//top right light
+
+	light.push_back(new Light(glm::vec3(-20, 30, 45), .2));		//top left light
+
+	light.push_back(new Light(glm::vec3(-5, -1, 20), .2));				//bottom light
+
+
+	scene[0]->setImage(groundTexture);
+	scene[0]->setImageSpec(groundTextureSpecular);
+
+
+	scene[1]->setImage(wallTexture);
+	scene[1]->setImageSpec(wallTextureSpecular);
 
 
 	cout << "h to toggle GUI" << endl;
@@ -157,28 +214,6 @@ void ofApp::draw() {
 
 	theCam->begin();
 
-	scene.clear();
-
-	scene.push_back(new Plane(glm::vec3(-1, -2, 0), glm::vec3(0, 1, 0), ofColor::darkBlue, 12, 10));				//ground plane
-
-	scene.push_back(new Plane(glm::vec3(-1, -1, -2), glm::vec3(0, 0, 1), ofColor::darkGray, 20, 15));	        	//wall plane
-
-	scene.push_back(new Sphere(glm::vec3(-2, -.5, 0), .5, ofColor::purple));											//purple sphere
-
-	scene.push_back(new Sphere(glm::vec3(-1, 0, 1), .5, ofColor::blue));												//blue sphere
-
-	//scene.push_back(new Sphere(glm::vec3(.5, 0, 0), .5, ofColor::darkGreen));											//green sphere
-
-
-	light.clear();
-
-	light.push_back(new Light(glm::vec3(100, 150, 150), .2));			//top right light
-
-	light.push_back(new Light(glm::vec3(-20, 30, 45), .2));		//top left light
-
-	//light.push_back(new Light(glm::vec3(-5, -2, 20), .2));				//bottom light
-
-
 	//draw all scene objects
 	for (int i = 0; i < scene.size(); i++) {
 		ofColor color = scene[i]->diffuseColor;
@@ -186,21 +221,12 @@ void ofApp::draw() {
 		scene[i]->draw();
 	}
 
-	//scene[0]->setImage(groundTexture);
-	//scene[0]->setImageSpec(groundTextureSpecular);
-
-	//scene[1]->setImage(wallTexture);
-	//scene[1]->setImageSpec(wallTextureSpecular);
-
 
 	//draw all lights
 	for (int i = 0; i < light.size(); i++) {
 		light[i]->setIntensity(intensity);
 		light[i]->draw();
 	}
-
-	//renderCam.draw();
-	//renderCam.view.draw();
 
 	theCam->end();
 
@@ -362,13 +388,18 @@ ofColor ofApp::shade(const glm::vec3& p, const glm::vec3& norm, const ofColor di
 		blocked = false;
 
 		//test for shadows
-		for (int k = 0; k < scene.size(); k++) {
-			if (scene[k]->intersect(r, p1, glm::vec3(0, 1, 0))) {													//check if current point intersected
-				Ray shadowRay = Ray(scene[k]->getIntersectionPoint(), light[i]->position - scene[k]->getIntersectionPoint());
-				//check all sphere objects
-				for (int j = 2; j < scene.size(); j++) {
-					if (scene[j]->intersect(shadowRay, p1, scene[j]->getNormal(p1))) {
-						blocked = true;
+		if (closestIndex < 2) {								//if the closest object is one of the planes
+
+			for (int k = 0; k < 2; k++) {
+				if (scene[k]->intersect(r, p1, glm::vec3(0, 1, 0))) {													//check if current point intersected with ground plane
+
+					Ray shadowRay = Ray(scene[k]->getIntersectionPoint(), light[i]->position - scene[k]->getIntersectionPoint());
+
+					//check all sphere objects
+					for (int j = 2; j < scene.size(); j++) {
+						if (scene[j]->intersect(shadowRay, p1, scene[j]->getNormal(p1))) {
+							blocked = true;
+						}
 					}
 				}
 			}
@@ -419,7 +450,7 @@ ofColor ofApp::ambient(const ofColor diffuse) {
 ofColor ofApp::lambert(const glm::vec3& p, const glm::vec3& norm, const ofColor diffuse, float distance, Ray r, Light light) {
 	ofColor lambert = ofColor(0, 0, 0);
 	float distance1 = glm::distance(light.position, p);
-	
+
 	glm::vec3 l = glm::normalize(light.position - p);
 	lambert += diffuse * (light.intensity / distance1 * distance1) * (glm::max(zero, glm::dot(norm, l)));
 
